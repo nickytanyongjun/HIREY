@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIREY - AI Sourcing Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .workspace-welcome-group { background: #0d1224; border: 1px solid #1c2440; border-radius: 20px; padding: 30px; margin-bottom: 35px; }
+        .welcome-header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1c2440; padding-bottom: 20px; margin-bottom: 25px; }
+        .welcome-header-row h2 { margin: 0; font-size: 24px; color: #ffffff; }
+        .welcome-header-row .profile-badge { background: #161f38; padding: 8px 16px; border-radius: 10px; font-size: 13px; color: #9d5cff; border: 1px solid #263252; }
+        .metrics-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .metric-mini-card { background: #161f38; border: 1px solid #263252; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+        .metric-mini-card h4 { color: #7f8db3; font-size: 11px; text-transform: uppercase; margin: 0; }
+        .metric-mini-card .metric-number { color: #ffffff; font-size: 28px; font-weight: 700; }
+        .share-link-sub-box { background: #090d1a; border: 1px dashed #263252; padding: 15px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; }
+        .share-link-sub-box code { background: #111625; padding: 6px 12px; border-radius: 6px; color: #a78bfa; font-family: monospace; font-size: 13px; flex-grow: 1; border: 1px solid #1c2440; }
+
+        .ranked-list-wrapper { display: flex; flex-direction: column; gap: 18px; }
+        .recommendation-rank-badge { padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-block; width: max-content; }
+        .rank-gold { background: linear-gradient(135deg, #eab308, #ca8a04) !important; color: white; }
+        .rank-silver { background: linear-gradient(135deg, #94a3b8, #475569) !important; color: white; }
+        .rank-bronze { background: linear-gradient(135deg, #b45309, #78350f) !important; color: white; }
+        .hidden-ranks-container { display: none; flex-direction: column; gap: 18px; }
+        .show-more-toggle-btn { background: #161f38; border: 1px solid #263252; color: #cbd5e1; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer; text-align: center; margin-top: 15px; width: 100%; }
+        .show-more-toggle-btn:hover { background: #1f2c52; color: white; border-color: #9d5cff; }
+
+        .analytics-dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-top: 20px; }
+        @media (max-width: 900px) { .analytics-dashboard-grid { grid-template-columns: 1fr; } }
+        .analytics-card-item { background: #0d1224; border: 1px solid #1c2440; border-radius: 16px; padding: 24px; }
+        .analytics-card-item h3 { color: #ffffff; font-size: 16px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
+        .chart-progress-bar-stack { display: flex; flex-direction: column; gap: 16px; }
+        .progress-bar-row { display: flex; flex-direction: column; gap: 6px; }
+        .progress-bar-labels { display: flex; justify-content: space-between; font-size: 13px; color: #cbd5e1; }
+        .progress-track-bg { background: #161f38; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #263252; }
+        .progress-fill-bar { background: linear-gradient(90deg, #7c3aed, #9d5cff); height: 100%; width: 0%; }
+        .audit-trail-timeline { display: flex; flex-direction: column; gap: 14px; max-height: 320px; overflow-y: auto; }
+        .audit-node-item { border-left: 2px solid #3b82f6; padding-left: 14px; position: relative; }
+        .audit-node-item::before { content: ""; position: absolute; left: -6px; top: 2px; width: 10px; height: 10px; background: #060816; border: 2px solid #3b82f6; border-radius: 50%; }
+        .audit-node-item .node-stamp { font-size: 11px; color: #6b7280; display: block; }
+        .audit-node-item .node-content { font-size: 13px; color: #e2e8f0; margin-top: 2px; }
+        .empty-chart-fallback { color: #6b7280; text-align: center; font-size: 13px; padding: 40px 0; }
+
+        .interview-tab-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-top: 20px; }
+        .transcript-chat-box { background: #090d1a; border: 1px solid #1c2440; border-radius: 12px; padding: 20px; max-height: 450px; overflow-y: auto; }
+        .view-transcript-btn { background: #161f38; border: 1px solid #263252; color: #cbd5e1; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%; text-align: left; margin-bottom: 8px; }
+        .view-transcript-btn:hover { background: #263252; border-color: #9d5cff; color: white; }
+
+        .candidate-card-wrapper { display: flex; align-items: center; justify-content: space-between; background: #0d1224; border: 1px solid #1c2440; border-radius: 14px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; }
+        .candidate-card-wrapper:hover { border-color: #263252; background: #11172e; }
+        .candidate-inner-flex { display: flex; gap: 15px; align-items: flex-start; flex-grow: 1; }
+        .remove-candidate-btn { background: #ef4444; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: background 0.2s; margin-left: 15px; }
+        .remove-candidate-btn:hover { background: #dc2626; }
+
+        .logo-header-container { display: flex; align-items: center; gap: 12px; padding: 10px 5px; margin-bottom: 6px; }
+        .minimal-logo-graphic { width: 32px; height: 32px; background: linear-gradient(135deg, #7c3aed, #9d5cff); border-radius: 8px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
+
+        .tab-link { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 10px; color: #94a3b8; transition: all 0.2s; text-decoration: none; cursor: pointer; margin-bottom: 4px; }
+        .tab-link svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; transition: stroke 0.2s; }
+        .tab-link:hover, .tab-link.active { color: #ffffff; background: #161f38; }
+        .tab-link.active { background: linear-gradient(90deg, rgba(124,58,237,0.15) 0%, rgba(22,31,56,0.4) 100%); color: #a78bfa; border-left: 3px solid #7c3aed; padding-left: 13px; }
+        
+        .sidebar-nav-counter { background: #1e293b; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; margin-left: auto; border: 1px solid #334155; transition: all 0.2s; }
+        .tab-link.active .sidebar-nav-counter { background: #7c3aed; color: #ffffff; border-color: #9d5cff; }
+
+        /* Custom Modal Form Styling for Adding New Positions */
+        .modal-body input[type="text"] { width: 100%; padding: 12px; background: #090d1a; border: 1px solid #263252; border-radius: 8px; color: white; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s; }
+        .modal-body input[type="text"]:focus { border-color: #9d5cff; outline: none; }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <div>
+        <div class="logo-header-container">
+            <div class="minimal-logo-graphic">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="logo" style="margin:0; font-size:20px; letter-spacing: 0.5px;">HIREY</h1>
+                <p class="subtitle" style="margin:2px 0 0 0; font-size:11px;">AI Recruitment Core</p>
+            </div>
+        </div>
+        <hr style="border:0; border-top:1px solid #1c2440; margin:15px 0 20px 0;">
+        <nav>
+            <a class="tab-link active" data-tab="dashboardTab">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                Dashboard
+            </a>
+            <a class="tab-link" data-tab="candidateTab">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                Candidates
+                <span class="sidebar-nav-counter hudCandidateCount">0</span>
+            </a>
+            <a class="tab-link" data-tab="jobsTab">
+                <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                Jobs
+                <span class="sidebar-nav-counter hudJobCount">0</span>
+            </a>
+            <a class="tab-link" data-tab="interviewTab">
+                <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                Interviews
+            </a>
+            <a class="tab-link" data-tab="reportsTab">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Reports
+            </a>
+        </nav>
+    </div>
+</div>
+
+<div class="main">
+
+    <div id="dashboardTab" class="tab-content active-tab">
+        <div class="workspace-welcome-group">
+            <div class="welcome-header-row">
+                <div>
+                    <h2>Welcome Back, Recruiter 👋</h2>
+                    <p style="color: #7f8db3; font-size: 13px; margin-top: 4px; margin-bottom: 0;">Real-time management view of your talent ecosystem metrics.</p>
+                </div>
+                <div class="profile-badge">HIREY Workspace Active</div>
+            </div>
+            <div class="metrics-summary-grid">
+                <div class="metric-mini-card">
+                    <h4>Total Candidate Pool</h4>
+                    <div class="hudCandidateCount metric-number">0</div>
+                </div>
+                <div class="metric-mini-card">
+                    <h4>Active Job Openings</h4>
+                    <div class="hudJobCount metric-number">0</div>
+                </div>
+            </div>
+            <div class="share-link-sub-box">
+                <span style="font-size: 16px;">🔗</span>
+                <span style="font-size: 12px; font-weight: 500; color: #cbd5e1;">Candidate Submission Portal:</span>
+                <code class="publicPortalUrl">http://127.0.0.1:9999/join</code>
+            </div>
+        </div>
+
+        <div class="candidate-section">
+            <div class="candidate-top">
+                <h2>Active Job Roles</h2>
+            </div>
+            <div id="dashboardJobList" class="job-grid"></div>
+        </div>
+
+        <div class="result-card">
+            <h2>AI Sourcing & Ranked Match Results</h2>
+            <div id="dashboardMatchOutput" style="margin-top: 20px;">
+                <p style="color: #7f8db3; font-size: 14px;">Select an active job role card from above to prompt the AI matcher rank engine...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="candidateTab" class="tab-content">
+        <div class="candidate-section">
+            <div class="candidate-top" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Candidate Pool</h2>
+                <button id="addCandidateBtn" class="add-btn-primary">+ Upload Resume</button>
+            </div>
+            <div id="candidateList">
+                <div class="empty-state">No candidates added yet. Upload resumes to construct your database.</div>
+            </div>
+        </div>
+        <div class="result-card">
+            <h2>AI Analysis Viewport</h2>
+            <pre id="resultBox">Click a candidate profile card to view parsed details...</pre>
+        </div>
+    </div>
+
+    <div id="jobsTab" class="tab-content">
+        <div class="candidate-section">
+            <div class="candidate-top" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Manage Job Track Openings</h2>
+                <button id="addNewJobBtn" class="add-btn-primary">+ Create New Job Position</button>
+            </div>
+            <div id="masterJobsContainer" class="job-grid"></div>
+        </div>
+    </div>
+
+    <div id="interviewTab" class="tab-content">
+        <div class="candidate-section">
+            <h2>Live AI Bot Interview Transcripts</h2>
+            <p style="color: #7f8db3; font-size: 14px; margin-top: 5px;">Monitor live conversations as applicants interact with the automated evaluation loops.</p>
+            
+            <div class="interview-tab-grid">
+                <div>
+                    <h3 style="font-size:14px; margin-bottom:10px; color:#9d5cff;">Active Sessions</h3>
+                    <div id="interviewSessionsList">
+                        <div style="color:#6b7280; font-size:13px;">No active screening links executed yet.</div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="font-size:14px; margin-bottom:10px; color:#cbd5e1;">Live Feed Stream</h3>
+                    <div id="liveTranscriptDisplay" class="transcript-chat-box">
+                        <p style="color:#6b7280; font-size:13px; margin:0;">Select a session from the list to view live interrogation transcript lines.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reportsTab" class="tab-content">
+        <div class="candidate-section">
+            <h2>HIREY Talent Sourcing Analytics</h2>
+            <p style="color: #7f8db3; font-size: 14px; margin-top: 5px;">Automated distribution tracking evaluated from parsed talent pool profiles.</p>
+        </div>
+        <div class="analytics-dashboard-grid">
+            <div class="analytics-card-item">
+                <h3>📊 High-Concentration Candidate Skill Metrics</h3>
+                <div id="skillsChartContainer" class="chart-progress-bar-stack">
+                    <div class="empty-chart-fallback">Parsing metrics... upload records to map core competencies.</div>
+                </div>
+            </div>
+            <div class="analytics-card-item">
+                <h3>⏰ Live Operation System Audit Log</h3>
+                <div id="auditTimelineContainer" class="audit-trail-timeline">
+                    <div class="audit-node-item">
+                        <span class="node-stamp">System Boot</span>
+                        <div class="node-content">HIREY match engines securely initialized.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="interviewModal" class="modal-overlay">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h3>Schedule Interview Invitation</h3>
+            <button id="closeModalBtn" class="modal-close-x">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="meta-field">
+                <label>Email Draft Message:</label>
+                <textarea id="modalEmailBody" rows="12"></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="copyEmailBtn" class="modal-btn primary" style="width: 100%;">Copy Body Content</button>
+        </div>
+    </div>
+</div>
+
+<div id="newJobModal" class="modal-overlay">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h3>Create New Job Tracking Node</h3>
+            <button id="closeJobModalBtn" class="modal-close-x">&times;</button>
+        </div>
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:16px;">
+            <div class="meta-field">
+                <label>Job Position Title Name:</label>
+                <input type="text" id="newJobTitleInput" placeholder="e.g. Full Stack Engineer">
+            </div>
+            <div class="meta-field">
+                <label>Custom Plain English Evaluation Requirements / Interview Questions:</label>
+                <textarea id="newJobDescriptionInput" rows="6" placeholder="e.g. Ask them about their experience with microservices, multi-threading architectures, and handling race conditions in SQL databases."></textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="saveJobModalBtn" class="modal-btn primary" style="width: 100%;">Save Position Structure</button>
+        </div>
+    </div>
+</div>
+
+<input type="file" id="resumeInput" accept=".pdf,.txt" hidden>
+
+<script>
+let globalCandidatesArray = [];
+let globalActiveJobs = [];
+
+const addBtn = document.getElementById("addCandidateBtn");
+const resumeInput = document.getElementById("resumeInput");
+const candidateList = document.getElementById("candidateList");
+const resultBox = document.getElementById("resultBox");
+const tabLinks = document.querySelectorAll(".tab-link");
+const tabContents = document.querySelectorAll(".tab-content");
+
+const dashboardJobList = document.getElementById("dashboardJobList");
+const masterJobsContainer = document.getElementById("masterJobsContainer");
+const addNewJobBtn = document.getElementById("addNewJobBtn");
+const dashboardMatchOutput = document.getElementById("dashboardMatchOutput");
+
+const interviewModal = document.getElementById("interviewModal");
+const closeModalBtn = document.getElementById("closeModalBtn");
+const modalEmailBody = document.getElementById("modalEmailBody");
+const copyEmailBtn = document.getElementById("copyEmailBtn");
+
+// Job Creation Modal Elements Handles
+const newJobModal = document.getElementById("newJobModal");
+const closeJobModalBtn = document.getElementById("closeJobModalBtn");
+const saveJobModalBtn = document.getElementById("saveJobModalBtn");
+const newJobTitleInput = document.getElementById("newJobTitleInput");
+const newJobDescriptionInput = document.getElementById("newJobDescriptionInput");
+
+document.querySelectorAll(".publicPortalUrl").forEach(el => {
+    el.innerText = window.location.origin + "/join";
+});
+
+function appendAuditLog(messageText) {
+    const container = document.getElementById("auditTimelineContainer");
+    const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const node = document.createElement("div");
+    node.className = "audit-node-item";
+    node.innerHTML = `<span class="node-stamp">${timestampStr}</span><div class="node-content">${messageText}</div>`;
+    if (container) container.prepend(node);
+}
+
+function recalculateSkillsMetricsReport() {
+    const container = document.getElementById("skillsChartContainer");
+    if (!container) return;
+    if (globalCandidatesArray.length === 0) {
+        container.innerHTML = `<div class="empty-chart-fallback">No processed resume tracks.</div>`;
+        return;
+    }
+    let skillsFrequencyMap = {};
+    globalCandidatesArray.forEach(c => {
+        if (!c.skills) return;
+        c.skills.split(/[,;|]/).forEach(tag => {
+            const cleaned = tag.trim();
+            if (cleaned.length < 2 || cleaned.toLowerCase() === "skills") return;
+            const titleCase = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+            skillsFrequencyMap[titleCase] = (skillsFrequencyMap[titleCase] || 0) + 1;
+        });
+    });
+    const sortedSkills = Object.entries(skillsFrequencyMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    if(sortedSkills.length === 0) { container.innerHTML = `<div class="empty-chart-fallback">Awaiting profile variables...</div>`; return; }
+    container.innerHTML = "";
+    sortedSkills.forEach(([skillName, frequency]) => {
+        const pct = Math.round((frequency / globalCandidatesArray.length) * 100);
+        const row = document.createElement("div");
+        row.className = "progress-bar-row";
+        row.innerHTML = `
+            <div class="progress-bar-labels"><span>${skillName}</span><span>${frequency} Candidate(s) (${pct}%)</span></div>
+            <div class="progress-track-bg"><div class="progress-fill-bar" style="width: ${pct}%;"></div></div>`;
+        container.appendChild(row);
+    });
+}
+
+function updateCounterDisplays() {
+    document.querySelectorAll(".hudCandidateCount").forEach(el => el.innerText = globalCandidatesArray.length);
+    document.querySelectorAll(".hudJobCount").forEach(el => el.innerText = globalActiveJobs.length);
+    recalculateSkillsMetricsReport();
+}
+
+tabLinks.forEach(link => {
+    link.addEventListener("click", () => {
+        tabLinks.forEach(l => l.classList.remove("active"));
+        tabContents.forEach(tab => tab.classList.remove("active-tab"));
+        link.classList.add("active");
+        document.getElementById(link.getAttribute("data-tab")).classList.add("active-tab");
+        
+        if(link.getAttribute("data-tab") === "interviewTab") {
+            refreshInterviewsTabview();
+        }
+    });
+});
+
+async function refreshInterviewsTabview() {
+    try {
+        const res = await fetch("/get_interviews");
+        const data = await res.json();
+        const listDiv = document.getElementById("interviewSessionsList");
+        
+        if(!data.interviews || data.interviews.length === 0) {
+            listDiv.innerHTML = `<div style="color:#6b7280; font-size:13px;">No active screening links executed yet.</div>`;
+            return;
+        }
+        
+        listDiv.innerHTML = "";
+        data.interviews.forEach(session => {
+            const btn = document.createElement("button");
+            btn.className = "view-transcript-btn";
+            btn.innerText = `👤 ${session.candidate} (${session.job})`;
+            btn.onclick = () => {
+                const viewer = document.getElementById("liveTranscriptDisplay");
+                viewer.innerHTML = "";
+                session.history.forEach(line => {
+                    const p = document.createElement("p");
+                    p.style.margin = "0 0 8px 0";
+                    p.style.fontSize = "13px";
+                    p.innerHTML = `<strong style="color:#9d5cff;">${line.sender}:</strong> <span style="color:#e2e8f0;">${line.text}</span>`;
+                    viewer.appendChild(p);
+                });
+            };
+            listDiv.appendChild(btn);
+        });
+    } catch(err) {}
+}
+
+async function pollBackendState() {
+    try {
+        const res = await fetch("/get_candidates");
+        const data = await res.json();
+        if(data.candidates) {
+            globalCandidatesArray = data.candidates;
+            globalActiveJobs = data.jobs;
+            updateCounterDisplays();
+            renderCandidatesPool();
+            syncJobsUserInterface();
+        }
+    } catch(e) {}
+}
+
+async function pushStateToBackend() {
+    try {
+        await fetch("/sync_candidates", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ candidates: globalCandidatesArray, jobs: globalActiveJobs })
+        });
+        updateCounterDisplays();
+    } catch(e) {}
+}
+
+function syncJobsUserInterface() {
+    dashboardJobList.innerHTML = ""; masterJobsContainer.innerHTML = "";
+    if (globalActiveJobs.length === 0) return;
+    globalActiveJobs.forEach(jobItem => {
+        // Handle both object layout format and simple string fallbacks gracefully
+        const jobTitle = typeof jobItem === 'string' ? jobItem : jobItem.title;
+        
+        const dashCard = document.createElement("div");
+        dashCard.className = "job-pill-card";
+        dashCard.innerHTML = `<h3>${jobTitle}</h3><p>Click to evaluate pool matching criteria</p>`;
+        dashCard.onclick = () => runAiMatchEngine(jobTitle);
+        dashboardJobList.appendChild(dashCard);
+
+        const manageCard = document.createElement("div");
+        manageCard.className = "job-pill-card";
+        manageCard.innerHTML = `<h3>${jobTitle}</h3><button class="remove-job-action-btn">&times; Delete Position</button>`;
+        manageCard.querySelector(".remove-job-action-btn").onclick = (e) => {
+            e.stopPropagation();
+            globalActiveJobs = globalActiveJobs.filter(j => (typeof j === 'string' ? j : j.title) !== jobTitle);
+            pushStateToBackend();
+            syncJobsUserInterface();
+        };
+        masterJobsContainer.appendChild(manageCard);
+    });
+}
+
+// Trigger Custom Job Configuration Overlay Window
+addNewJobBtn.addEventListener("click", () => {
+    newJobTitleInput.value = "";
+    newJobDescriptionInput.value = "";
+    newJobModal.classList.add("show");
+});
+
+closeJobModalBtn.onclick = () => newJobModal.classList.remove("show");
+
+saveJobModalBtn.addEventListener("click", () => {
+    const titleVal = newJobTitleInput.value.trim();
+    const descVal = newJobDescriptionInput.value.trim();
+    if (!titleVal) {
+        alert("Please specify a valid position title.");
+        return;
+    }
+    // Saved position metadata as structural objects to support dedicated criteria variables safely
+    globalActiveJobs.push({ title: titleVal, description: descVal });
+    pushStateToBackend();
+    syncJobsUserInterface();
+    newJobModal.classList.remove("show");
+    appendAuditLog(`Created new tracking node position: "${titleVal}".`);
+});
+
+async function runAiMatchEngine(jobTitle) {
+    if (globalCandidatesArray.length === 0) {
+        dashboardMatchOutput.innerHTML = `<p style="color: #ef4444;">No candidates available to calculate matching models.</p>`;
+        return;
+    }
+    dashboardMatchOutput.innerHTML = `<p style="color: #9d5cff;">HIREY Core calculating and ranking candidate compatibility profiles...</p>`;
+
+    try {
+        const response = await fetch("/match_job", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ job_title: jobTitle, candidates: globalCandidatesArray })
+        });
+        const data = await response.json();
+        if (data.error) {
+            dashboardMatchOutput.innerHTML = `<p style="color: #ef4444;">Evaluation pipeline error.</p>`;
+            return;
+        }
+
+        const rawBlocks = data.match_result.split("===");
+        let rankedDataList = [];
+
+        rawBlocks.forEach(block => {
+            if (!block.trim()) return;
+            let currentRank = 0;
+            let currentName = "";
+            let currentReasoning = "";
+
+            block.split("\n").forEach(line => {
+                const cleanLine = line.trim();
+                if (cleanLine.toUpperCase().startsWith("RANK:")) currentRank = parseInt(cleanLine.replace(/^RANK:\s*/i, ""), 10) || 0;
+                if (cleanLine.toUpperCase().startsWith("NAME:")) currentName = cleanLine.replace(/^NAME:\s*/i, "");
+                if (cleanLine.toUpperCase().startsWith("REASONING:")) currentReasoning = cleanLine.replace(/^REASONING:\s*/i, "");
+            });
+
+            if (currentName) {
+                const match = globalCandidatesArray.find(c => c.name.toLowerCase() === currentName.toLowerCase()) ||
+                             globalCandidatesArray.find(c => currentName.toLowerCase().includes(c.name.toLowerCase())) ||
+                             { name: currentName, skills: "Profile attributes matched", summary: "" };
+                rankedDataList.push({ rank: currentRank, name: match.name, skills: match.skills, reasoning: currentReasoning });
+            }
+        });
+
+        rankedDataList.sort((a, b) => a.rank - b.rank);
+        if (rankedDataList.length === 0) {
+            dashboardMatchOutput.innerHTML = `<p style="color: #ef4444;">Failed to construct a clear ranked mapping index.</p>`;
+            return;
+        }
+
+        dashboardMatchOutput.innerHTML = `
+            <div class="ranked-list-wrapper">
+                <div id="topThreeRanksContainer" style="display:flex; flex-direction:column; gap:18px;"></div>
+                <div id="extendedRanksContainer" class="hidden-ranks-container"></div>
+                <button id="toggleRanksBtn" class="show-more-toggle-btn" style="display:none;">Show More Candidate Positions</button>
+            </div>
+        `;
+
+        const topContainer = document.getElementById("topThreeRanksContainer");
+        const extendedContainer = document.getElementById("extendedRanksContainer");
+        const toggleBtn = document.getElementById("toggleRanksBtn");
+
+        rankedDataList.forEach((candidate, idx) => {
+            let rankClass = "";
+            if (candidate.rank === 1) rankClass = "rank-gold";
+            else if (candidate.rank === 2) rankClass = "rank-silver";
+            else if (candidate.rank === 3) rankClass = "rank-bronze";
+
+            const cardHtml = `
+                <div class="candidate-card recommendation-card-block" style="margin-bottom:0;">
+                    <div class="rec-card-flex-row">
+                        <img class="candidate-avatar-img" src="https://i.imgur.com/6VBx3io.png">
+                        <div class="candidate-info flex-info-grow">
+                            <span class="recommendation-rank-badge ${rankClass}">Rank #${candidate.rank}</span>
+                            <h3 style="margin-top:4px;">${candidate.name}</h3>
+                            <p><strong>Skills Matrix:</strong> ${candidate.skills}</p>
+                        </div>
+                        <button class="action-schedule-btn" onclick="openInterviewWindow('${candidate.name.replace(/'/g, "\\'")}', '${jobTitle.replace(/'/g, "\\'")}')">Schedule Interview</button>
+                    </div>
+                    <div class="justification-container-box">
+                        <span class="justification-badge">HIREY Core Recommendation Logic</span>
+                        <span style="color: #d6def8; display: block; margin-top: 5px;">${candidate.reasoning}</span>
+                    </div>
+                </div>
+            `;
+            if (idx < 3) topContainer.insertAdjacentHTML('beforeend', cardHtml);
+            else extendedContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
+
+        if (rankedDataList.length > 3) {
+            toggleBtn.style.display = "block";
+            toggleBtn.onclick = () => {
+                if (extendedContainer.style.display === "flex") {
+                    extendedContainer.style.display = "none";
+                    toggleBtn.innerText = "Show More Candidate Positions";
+                } else {
+                    extendedContainer.style.display = "flex";
+                    toggleBtn.innerText = "Hide Extended Candidate Positions";
+                }
+            };
+        }
+    } catch (err) {}
+}
+
+function openInterviewWindow(name, job) {
+    const encodedName = encodeURIComponent(name);
+    const encodedJob = encodeURIComponent(job);
+    const interviewLink = window.location.origin + "/interview/" + encodedName + "/" + encodedJob;
+    
+    modalEmailBody.value = `Dear ${name},\n\nThank you for choosing HIREY. We have generated an autonomous AI evaluation checkpoint regarding the ${job} role opening.\n\nPlease follow your dedicated screening portal link below to complete your screening process:\n👉 ${interviewLink}`;
+    interviewModal.classList.add("show");
+}
+closeModalBtn.onclick = () => interviewModal.classList.remove("show");
+
+addBtn.onclick = () => resumeInput.click();
+
+function removeCandidateProfile(candidateName, event) {
+    event.stopPropagation();
+    if(!confirm(`Are you sure you want to completely remove ${candidateName} from the database?`)) return;
+    
+    globalCandidatesArray = globalCandidatesArray.filter(c => c.name !== candidateName);
+    pushStateToBackend();
+    renderCandidatesPool();
+    resultBox.innerText = "Click a candidate profile card to view parsed details...";
+    appendAuditLog(`Removed candidate "${candidateName}" from active sourcing index tracking.`);
+}
+
+function renderCandidatesPool() {
+    candidateList.innerHTML = "";
+    if(globalCandidatesArray.length === 0) {
+        candidateList.innerHTML = `<div class="empty-state">No active profiles registered.</div>`; return;
+    }
+    globalCandidatesArray.forEach(candidate => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "candidate-card-wrapper";
+        
+        wrapper.innerHTML = `
+            <div class="candidate-inner-flex">
+                <img class="candidate-avatar-img" src="https://i.imgur.com/6VBx3io.png" style="margin-bottom:0;">
+                <div class="candidate-info">
+                    <h3 style="margin:0 0 4px 0;">${candidate.name}</h3>
+                    <p style="margin:0 0 4px 0; font-size:13px; color:#9d5cff;">${candidate.skills}</p>
+                    <span class="candidate-summary" style="display:block; font-size:12px; color:#7f8db3;">${candidate.summary}</span>
+                </div>
+            </div>
+            <button class="remove-candidate-btn">Remove</button>
+        `;
+        
+        wrapper.onclick = () => { 
+            const activeSummary = candidate.interview_summary || "No screening sessions finished for this candidate profile loop yet.";
+            resultBox.innerHTML = `NAME: ${candidate.name}\nSKILLS: ${candidate.skills}\nSUMMARY: ${candidate.summary}\n\n=========================================\nINTERVIEW SUMMARY:\n=========================================\n${activeSummary}`; 
+        };
+
+        wrapper.querySelector(".remove-candidate-btn").onclick = (e) => removeCandidateProfile(candidate.name, e);
+        candidateList.appendChild(wrapper);
+    });
+}
+
+resumeInput.addEventListener("change", async () => {
+    const file = resumeInput.files[0];
+    if (!file) return;
+    resultBox.innerText = "Analyzing file arrays via engine layers...";
+    let formData = new FormData();
+    formData.append("resume", file);
+    try {
+        const response = await fetch("/analyze", { method: "POST", body: formData });
+        const data = await response.json();
+        
+        let candidateName = "Unknown Profile";
+        let candidateSkills = "Skills tracked.";
+        let candidateSummary = "Profile overview structured.";
+
+        data.result.split("\n").forEach(line => {
+            if (line.trim().toUpperCase().startsWith("NAME:")) candidateName = line.replace(/NAME:/i, "").trim();
+            if (line.trim().toUpperCase().startsWith("SKILLS:")) candidateSkills = line.replace(/SKILLS:/i, "").trim();
+            if (line.trim().toUpperCase().startsWith("SUMMARY:")) candidateSummary = line.replace(/SUMMARY:/i, "").trim();
+        });
+
+        globalCandidatesArray.push({ name: candidateName, skills: candidateSkills, summary: candidateSummary, interview_summary: "Awaiting screening tracking link execution..." });
+        await pushStateToBackend();
+        renderCandidatesPool();
+        resultBox.innerText = data.result;
+    } catch (error) { resultBox.innerText = "Error analyzing file contents."; }
+    resumeInput.value = "";
+});
+
+async function runApplicationWorkspace() {
+    await pollBackendState();
+    setInterval(pollBackendState, 3000);
+    setInterval(refreshInterviewsTabview, 4000);
+}
+runApplicationWorkspace();
+</script>
+</body>
+</html>
